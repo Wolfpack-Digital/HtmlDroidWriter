@@ -6,12 +6,15 @@ import android.text.Editable;
 import android.text.Html;
 import android.text.Selection;
 import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.style.CharacterStyle;
+import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ToggleButton;
@@ -332,17 +335,95 @@ public class DroidWriterEditText extends HtmlEditText {
 		});
 	}
 
-	private class DWTextWatcher implements TextWatcher {
-		@Override
-		public void afterTextChanged(Editable editable) {
-			// Add style as the user types if a toggle button is enabled
-			int position = Selection.getSelectionStart(DroidWriterEditText.this.getText());
-			if (position < 0) {
-				position = 0;
-			}
 
-			if (position > 0) {
-				CharacterStyle[] appliedStyles = editable.getSpans(position - 1, position, CharacterStyle.class);
+	private class DWTextWatcher implements TextWatcher {
+        private RelativeSizeSpan span;
+        private Spannable spannable;
+
+        @Override
+		public void afterTextChanged(Editable editable) {
+//            int position = Selection.getSelectionStart(DroidWriterEditText.this.getText());
+//            if (position < 0) {
+//                position = 0;
+//            }
+//
+//            if (position > 0) {
+//                CharacterStyle[] appliedStyles = (CharacterStyle[])editable.getSpans(position - 1, position, CharacterStyle.class);
+//                StyleSpan currentBoldSpan = null;
+//                StyleSpan currentItalicSpan = null;
+//                UnderlineSpan currentUnderlineSpan = null;
+//
+//                int underLineStart;
+//                for(underLineStart = 0; underLineStart < appliedStyles.length; ++underLineStart) {
+//                    if (appliedStyles[underLineStart] instanceof StyleSpan) {
+//                        if (((StyleSpan)appliedStyles[underLineStart]).getStyle() == 1) {
+//                            currentBoldSpan = (StyleSpan)appliedStyles[underLineStart];
+//                        } else if (((StyleSpan)appliedStyles[underLineStart]).getStyle() == 2) {
+//                            currentItalicSpan = (StyleSpan)appliedStyles[underLineStart];
+//                        }
+//                    } else if (appliedStyles[underLineStart] instanceof UnderlineSpan) {
+//                        currentUnderlineSpan = (UnderlineSpan)appliedStyles[underLineStart];
+//                    }
+//                }
+//
+//                int underLineEnd;
+//                if (DroidWriterEditText.this.boldToggle != null) {
+//                    if (DroidWriterEditText.this.boldToggle.isChecked() && currentBoldSpan == null) {
+//                        editable.setSpan(new StyleSpan(1), position - 1, position, 34);
+//                    } else if (!DroidWriterEditText.this.boldToggle.isChecked() && currentBoldSpan != null) {
+//                        underLineStart = editable.getSpanStart(currentBoldSpan);
+//                        underLineEnd = editable.getSpanEnd(currentBoldSpan);
+//                        editable.removeSpan(currentBoldSpan);
+//                        if (underLineStart <= position - 1) {
+//                            editable.setSpan(new StyleSpan(1), underLineStart, position - 1, 34);
+//                        }
+//
+//                        if (underLineEnd > position) {
+//                            editable.setSpan(new StyleSpan(1), position, underLineEnd, 34);
+//                        }
+//                    }
+//                }
+//
+//                if (DroidWriterEditText.this.italicsToggle != null && DroidWriterEditText.this.italicsToggle.isChecked() && currentItalicSpan == null) {
+//                    editable.setSpan(new StyleSpan(2), position - 1, position, 34);
+//                } else if (DroidWriterEditText.this.italicsToggle != null && !DroidWriterEditText.this.italicsToggle.isChecked() && currentItalicSpan != null) {
+//                    underLineStart = editable.getSpanStart(currentItalicSpan);
+//                    underLineEnd = editable.getSpanEnd(currentItalicSpan);
+//                    editable.removeSpan(currentItalicSpan);
+//                    if (underLineStart <= position - 1) {
+//                        editable.setSpan(new StyleSpan(2), underLineStart, position - 1, 34);
+//                    }
+//
+//                    if (underLineEnd > position) {
+//                        editable.setSpan(new StyleSpan(2), position, underLineEnd, 34);
+//                    }
+//                }
+//
+//                if (DroidWriterEditText.this.underlineToggle != null && DroidWriterEditText.this.underlineToggle.isChecked() && currentUnderlineSpan == null) {
+//                    editable.setSpan(new UnderlineSpan(), position - 1, position, 34);
+//                } else if (DroidWriterEditText.this.underlineToggle != null && !DroidWriterEditText.this.underlineToggle.isChecked() && currentUnderlineSpan != null) {
+//                    underLineStart = editable.getSpanStart(currentUnderlineSpan);
+//                    underLineEnd = editable.getSpanEnd(currentUnderlineSpan);
+//                    editable.removeSpan(currentUnderlineSpan);
+//                    if (underLineStart <= position - 1) {
+//                        editable.setSpan(new UnderlineSpan(), underLineStart, position - 1, 34);
+//                    }
+//
+//                    if (underLineEnd > position) {
+//                        editable.setSpan(new UnderlineSpan(), position, underLineEnd, 34);
+//                    }
+//                }
+//            }
+            int beginIndex = spannable.getSpanStart(span);
+            int endIndex = spannable.getSpanEnd(span);
+
+            // Cleanup
+            spannable.removeSpan(span);
+            span = null;
+            spannable = null;
+
+			if (endIndex > 0) {
+				CharacterStyle[] appliedStyles = editable.getSpans(beginIndex, endIndex, CharacterStyle.class);
 
 				StyleSpan currentBoldSpan = null;
 				StyleSpan currentItalicSpan = null;
@@ -373,7 +454,7 @@ public class DroidWriterEditText extends HtmlEditText {
 						// span is inclusive,
 						// so any new characters entered right after this one
 						// will automatically get this style.
-						editable.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), position - 1, position,
+						editable.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), beginIndex, endIndex,
 								Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
 					} else if (!boldToggle.isChecked() && currentBoldSpan != null) {
 						// The user switched the bold style button off and the
@@ -385,8 +466,8 @@ public class DroidWriterEditText extends HtmlEditText {
 						int boldEnd = editable.getSpanEnd(currentBoldSpan);
 
 						editable.removeSpan(currentBoldSpan);
-						if (boldStart <= (position - 1)) {
-							editable.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), boldStart, position - 1,
+						if (boldStart <= (beginIndex)) {
+							editable.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), boldStart, beginIndex,
 									Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
 						}
 
@@ -396,8 +477,8 @@ public class DroidWriterEditText extends HtmlEditText {
 						// after the newly entered character and
 						// ends at the old span's ending position. So we split
 						// the span.
-						if (boldEnd > position) {
-							editable.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), position, boldEnd,
+						if (boldEnd > endIndex) {
+							editable.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), endIndex, boldEnd,
 									Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
 						}
 					}
@@ -408,41 +489,41 @@ public class DroidWriterEditText extends HtmlEditText {
 
 				// Handle the italics style toggle button if it's present
 				if (italicsToggle != null && italicsToggle.isChecked() && currentItalicSpan == null) {
-					editable.setSpan(new StyleSpan(android.graphics.Typeface.ITALIC), position - 1, position,
+					editable.setSpan(new StyleSpan(android.graphics.Typeface.ITALIC), beginIndex, endIndex,
 							Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
 				} else if (italicsToggle != null && !italicsToggle.isChecked() && currentItalicSpan != null) {
 					int italicStart = editable.getSpanStart(currentItalicSpan);
 					int italicEnd = editable.getSpanEnd(currentItalicSpan);
 
 					editable.removeSpan(currentItalicSpan);
-					if (italicStart <= (position - 1)) {
-						editable.setSpan(new StyleSpan(android.graphics.Typeface.ITALIC), italicStart, position - 1,
+					if (italicStart <= (beginIndex)) {
+						editable.setSpan(new StyleSpan(android.graphics.Typeface.ITALIC), italicStart, beginIndex,
 								Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
 					}
 
 					// Split the span
-					if (italicEnd > position) {
-						editable.setSpan(new StyleSpan(android.graphics.Typeface.ITALIC), position, italicEnd,
+					if (italicEnd > endIndex) {
+						editable.setSpan(new StyleSpan(android.graphics.Typeface.ITALIC), endIndex, italicEnd,
 								Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
 					}
 				}
 
 				// Handle the underlined style toggle button if it's present
 				if (underlineToggle != null && underlineToggle.isChecked() && currentUnderlineSpan == null) {
-					editable.setSpan(new UnderlineSpan(), position - 1, position, Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
+					editable.setSpan(new UnderlineSpan(), beginIndex, endIndex, Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
 				} else if (underlineToggle != null && !underlineToggle.isChecked() && currentUnderlineSpan != null) {
 					int underLineStart = editable.getSpanStart(currentUnderlineSpan);
 					int underLineEnd = editable.getSpanEnd(currentUnderlineSpan);
 
 					editable.removeSpan(currentUnderlineSpan);
-					if (underLineStart <= (position - 1)) {
-						editable.setSpan(new UnderlineSpan(), underLineStart, position - 1,
+					if (underLineStart <= (beginIndex)) {
+						editable.setSpan(new UnderlineSpan(), underLineStart, beginIndex,
 								Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
 					}
 
 					// We need to split the span
-					if (underLineEnd > position) {
-						editable.setSpan(new UnderlineSpan(), position, underLineEnd,
+					if (underLineEnd > endIndex) {
+						editable.setSpan(new UnderlineSpan(), endIndex, underLineEnd,
 								Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
 					}
 				}
@@ -454,7 +535,14 @@ public class DroidWriterEditText extends HtmlEditText {
 		}
 
 		public void onTextChanged(CharSequence s, int start, int before, int count) {
-			// Unused
+            if (s instanceof Spannable) {
+                spannable = (Spannable) s;
+            } else {
+                spannable = new SpannableString(s); // Fallback it will break the logic
+            }
+
+            span = new RelativeSizeSpan(1.0f);
+            spannable.setSpan(span, start, start + count, Spanned.SPAN_COMPOSING);
 		}
 	}
 }
