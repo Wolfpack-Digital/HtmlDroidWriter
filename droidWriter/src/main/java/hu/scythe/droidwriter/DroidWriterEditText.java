@@ -429,20 +429,41 @@ public class DroidWriterEditText extends HtmlEditText {
 				StyleSpan currentItalicSpan = null;
 				UnderlineSpan currentUnderlineSpan = null;
 
+				boolean characterDeleted = beginIndex == endIndex;
+
 				// Look for possible styles already applied to the entered text
 				for (int i = 0; i < appliedStyles.length; i++) {
 					if (appliedStyles[i] instanceof StyleSpan) {
 						if (((StyleSpan) appliedStyles[i]).getStyle() == android.graphics.Typeface.BOLD) {
 							// Bold style found
-							currentBoldSpan = (StyleSpan) appliedStyles[i];
+							StyleSpan potentialSpan = (StyleSpan) appliedStyles[i];
+							if (characterDeleted && spanIsEmpty(editable, potentialSpan)) {
+								editable.removeSpan(potentialSpan);
+							} else {
+								currentBoldSpan = potentialSpan;
+							}
 						} else if (((StyleSpan) appliedStyles[i]).getStyle() == android.graphics.Typeface.ITALIC) {
 							// Italic style found
-							currentItalicSpan = (StyleSpan) appliedStyles[i];
+							StyleSpan potentialSpan = (StyleSpan) appliedStyles[i];
+							if (characterDeleted && spanIsEmpty(editable, potentialSpan)) {
+								editable.removeSpan(potentialSpan);
+							} else {
+								currentItalicSpan = potentialSpan;
+							}
 						}
 					} else if (appliedStyles[i] instanceof UnderlineSpan) {
 						// Underlined style found
-						currentUnderlineSpan = (UnderlineSpan) appliedStyles[i];
+						UnderlineSpan potentialSpan = (UnderlineSpan) appliedStyles[i];
+						if (characterDeleted && spanIsEmpty(editable, potentialSpan)) {
+							editable.removeSpan(potentialSpan);
+						} else {
+							currentUnderlineSpan = potentialSpan;
+						}
 					}
+				}
+
+				if (characterDeleted) {
+					onSelectionChanged(beginIndex, endIndex);
 				}
 
 				// Handle the bold style toggle button if it's present
@@ -528,6 +549,12 @@ public class DroidWriterEditText extends HtmlEditText {
 					}
 				}
 			}
+		}
+
+		private boolean spanIsEmpty(Editable editable, CharacterStyle styleSpan) {
+			int start = editable.getSpanStart(styleSpan);
+			int end = editable.getSpanEnd(styleSpan);
+			return end - start <= 0;
 		}
 
 		public void beforeTextChanged(CharSequence s, int start, int count, int after) {
