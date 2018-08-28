@@ -473,58 +473,74 @@ public class DroidWriterEditText extends HtmlEditText {
                 // If text is added on the first position on a line and the following text already
                 // has the same spans applied append this new text to the existing spans
                 if (beginIndex >= 0 && beginIndex == 0 || editable.charAt(beginIndex - 1) == '\n') {
-                    CharacterStyle[] stylesInRange = editable.getSpans(beginIndex, endIndex + 1, CharacterStyle.class);
-                    StyleSpan inRangeBoldSpan = null;
-                    StyleSpan inRangeItalicSpan = null;
-                    UnderlineSpan inRangeUnderlineSpan = null;
 
-                    // Look for possible styles on the position next to it
-                    for (CharacterStyle aStylesInRange : stylesInRange) {
-                        if (aStylesInRange instanceof StyleSpan) {
-                            if (((StyleSpan) aStylesInRange).getStyle() == Typeface.BOLD) {
-                                // Bold style found
-                                inRangeBoldSpan = (StyleSpan) aStylesInRange;
-                            } else if (((StyleSpan) aStylesInRange).getStyle() == Typeface.ITALIC) {
-                                // Italic style found
-                                inRangeItalicSpan = (StyleSpan) aStylesInRange;
-                            }
-                        } else if (aStylesInRange instanceof UnderlineSpan) {
-                            // Underlined style found
-                            inRangeUnderlineSpan = (UnderlineSpan) aStylesInRange;
-                        }
-                    }
-
-                    // Checking if the spans match the toggles
-                    boolean shouldAppendToNextSpan = true;
+                    boolean createsNewSpans = false;
                     if (boldToggle == null ||
-                            (boldToggle.isChecked() == (inRangeBoldSpan == null))) {
-                        shouldAppendToNextSpan = false;
+                            (boldToggle.isChecked() == (currentBoldSpan == null))) {
+                        createsNewSpans = true;
                     } else if (italicsToggle == null ||
-                            (italicsToggle.isChecked() == (inRangeItalicSpan == null))) {
-                        shouldAppendToNextSpan = false;
+                            (italicsToggle.isChecked() == (currentItalicSpan == null))) {
+                        createsNewSpans = true;
                     } else if (underlineToggle == null ||
-                            (underlineToggle.isChecked() == (inRangeUnderlineSpan == null))) {
-                        shouldAppendToNextSpan = false;
+                            (underlineToggle.isChecked() == (currentUnderlineSpan == null))) {
+                        createsNewSpans = true;
                     }
 
-                    // Remove existing spans so new ones are created that include the newly
-                    // added text
-                    if (shouldAppendToNextSpan) {
-                        int endPosition = endIndex;
-                        if (inRangeBoldSpan != null) {
-                            endPosition = editable.getSpanEnd(inRangeBoldSpan);
-                            editable.removeSpan(inRangeBoldSpan);
-                        }
-                        if (inRangeItalicSpan != null) {
-                            endPosition = editable.getSpanEnd(inRangeItalicSpan);
-                            editable.removeSpan(inRangeItalicSpan);
-                        }
-                        if (inRangeUnderlineSpan != null) {
-                            endPosition = editable.getSpanEnd(inRangeUnderlineSpan);
-                            editable.removeSpan(inRangeUnderlineSpan);
+                    if (createsNewSpans) {
+                        // Looking for existing spans that match the toggles on the next position
+                        CharacterStyle[] stylesInRange = editable.getSpans(beginIndex, endIndex + 1, CharacterStyle.class);
+                        StyleSpan inRangeBoldSpan = null;
+                        StyleSpan inRangeItalicSpan = null;
+                        UnderlineSpan inRangeUnderlineSpan = null;
+
+                        // Look for possible styles on the position next to it
+                        for (CharacterStyle aStylesInRange : stylesInRange) {
+                            if (aStylesInRange instanceof StyleSpan) {
+                                if (((StyleSpan) aStylesInRange).getStyle() == Typeface.BOLD) {
+                                    // Bold style found
+                                    inRangeBoldSpan = (StyleSpan) aStylesInRange;
+                                } else if (((StyleSpan) aStylesInRange).getStyle() == Typeface.ITALIC) {
+                                    // Italic style found
+                                    inRangeItalicSpan = (StyleSpan) aStylesInRange;
+                                }
+                            } else if (aStylesInRange instanceof UnderlineSpan) {
+                                // Underlined style found
+                                inRangeUnderlineSpan = (UnderlineSpan) aStylesInRange;
+                            }
                         }
 
-                        endIndex = endPosition;
+                        // Checking if the spans match the toggles
+                        boolean shouldAppendToNextSpan = true;
+                        if (boldToggle == null ||
+                                (boldToggle.isChecked() == (inRangeBoldSpan == null))) {
+                            shouldAppendToNextSpan = false;
+                        } else if (italicsToggle == null ||
+                                (italicsToggle.isChecked() == (inRangeItalicSpan == null))) {
+                            shouldAppendToNextSpan = false;
+                        } else if (underlineToggle == null ||
+                                (underlineToggle.isChecked() == (inRangeUnderlineSpan == null))) {
+                            shouldAppendToNextSpan = false;
+                        }
+
+                        // Remove existing spans so new ones are created that include the newly
+                        // added text
+                        if (shouldAppendToNextSpan) {
+                            int endPosition = endIndex;
+                            if (inRangeBoldSpan != null) {
+                                endPosition = editable.getSpanEnd(inRangeBoldSpan);
+                                editable.removeSpan(inRangeBoldSpan);
+                            }
+                            if (inRangeItalicSpan != null) {
+                                endPosition = editable.getSpanEnd(inRangeItalicSpan);
+                                editable.removeSpan(inRangeItalicSpan);
+                            }
+                            if (inRangeUnderlineSpan != null) {
+                                endPosition = editable.getSpanEnd(inRangeUnderlineSpan);
+                                editable.removeSpan(inRangeUnderlineSpan);
+                            }
+
+                            endIndex = endPosition;
+                        }
                     }
                 }
 
