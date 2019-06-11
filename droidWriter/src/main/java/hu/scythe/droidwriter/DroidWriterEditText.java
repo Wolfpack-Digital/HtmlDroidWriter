@@ -21,6 +21,7 @@ import android.widget.ToggleButton;
 
 import org.sufficientlysecure.htmltextview.HtmlEditText;
 
+
 public class DroidWriterEditText extends HtmlEditText {
 
     // Log tag
